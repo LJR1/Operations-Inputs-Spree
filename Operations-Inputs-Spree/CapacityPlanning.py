@@ -1,10 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 Created on Fri Jan 09 14:13:28 2015
-
-@author: Laurie.Richardson
 """
-
 import pandas as pd
 from pandas import DataFrame
 import gspread
@@ -22,7 +19,8 @@ from email import Encoders
 
 today=date.today()
 
-pswd = raw_input("Please enter your google password:")
+pswd = raw_input("Please enter your password:")
+email_address= raw_input("Please enter your email address:")
 
 #Run Totalxlxs Script for the latest stock count info
 import sys
@@ -37,11 +35,11 @@ Totalxlsx.data_total( DocName, HistoryPath, SavePath )
 R_Stock=pd.read_excel('Y:\\SUPPLY CHAIN\\Python Scripts\\02_StockCount\\Rolling Stock.xlsx',index_col=None, na_values=['NA'])
 
 #Create Category_Conversion Table for Reporting
-Product_Table=pd.read_csv('C:\Users\Laurie.Richardson\Documents\G Spread\Product Conversion Table 9 Feb.csv', na_values=['NA'])
+Product_Table=pd.read_csv('C:\Users\Laurie.Richardson\Operations-Inputs-Spree\Operations-Inputs-Spree\Product Conversion Table 9 Feb.csv', na_values=['NA'])
 Category_Conversion=Product_Table.set_index('DETAILED CATEGORY')['CATEGORY'].to_dict()
 
 #Import Post-It Workflow data
-c = gspread.Client(auth=('spreewarehouse@gmail.com',pswd))
+c = gspread.Client(auth=(email_address,pswd))
 c.login()
 c.open('Stock Processing')
 sht=c.open('Stock Processing')
@@ -51,7 +49,7 @@ headers=info.pop(0)
 df1=DataFrame(data=info,columns=headers)
 
 #Import Epping Receiving Data
-d=gspread.Client(auth=('spreewarehouse@gmail.com',pswd))
+d=gspread.Client(auth=(email_address,pswd))
 d.login()
 d.open('Epping Receiving Report')
 sht=d.open('Epping Receiving Report')
@@ -314,7 +312,7 @@ today = date.today()
 urlFile = open("MailList.txt", "r+")
 MailList = [i.strip() for i in urlFile.readlines()]    
         
-fromEmail = 'spreewarehouse@gmail.com' 
+fromEmail = email_address 
 
 #Create message
 msg['Subject'] = str(doc_name) + str(today)
@@ -338,7 +336,7 @@ mailServer.set_debuglevel(1)
 mailServer.ehlo()
 mailServer.starttls()
 mailServer.ehlo()
-mailServer.login('spreewarehouse@gmail.com', pswd)
+mailServer.login(email_address, pswd)
 mailServer.ehlo()
 mailServer.sendmail(fromEmail, MailList, msg.as_string())
 mailServer.quit()
