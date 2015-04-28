@@ -49,10 +49,10 @@ ReturnsQC=df1[['Date Spree QC processed the return','QC agent name']]
 ReturnsQC['Date Spree QC processed the return']=pd.to_datetime(ReturnsQC['Date Spree QC processed the return'],coerce=True)
 ReturnsQC['Returns QCd per agent']=1
 
-ReturnsQC['QC agent name'] = ReturnsQC['QC agent name'].str.title().str.strip('-')
+ReturnsQC['QC agent name'] = ReturnsQC['QC agent name'].str.title().str.strip('-').dropna(how='all')
 
 ReturnsQCPivot=pd.pivot_table(ReturnsQC, values='Returns QCd per agent',index=['Date Spree QC processed the return'],columns=['QC agent name'],aggfunc=np.sum).ix[-14:]
-ReturnsQCPivot=ReturnsQCPivot.drop(['Caroline','Genevieve','N/A'],axis=1)
+#ReturnsQCPivot=ReturnsQCPivot.drop(['Caroline','Genevieve','N/A'],axis=1)
 
 #Number of Returns processed per day by Order Number per QC Agent (Rolling 14 day)
 ReturnsQC_Order=df1[['Date Spree QC processed the return','QC agent name','Order Number']]
@@ -65,10 +65,10 @@ ReturnsQC_Order_Group_Counts=pd.DataFrame(ReturnsQC_Order_Group).reset_index()
 ReturnsQC_Order_Group_Counts['Returns Processed by Order Level']=1
 ReturnsQC_Order_Group_Counts_Final=ReturnsQC_Order_Group_Counts[['Date Spree QC processed the return','QC agent name','Returns Processed by Order Level']]
 ReturnsQC_Order_Group_Counts_Pivot=pd.pivot_table(ReturnsQC_Order_Group_Counts_Final,values='Returns Processed by Order Level',index='Date Spree QC processed the return',columns=['QC agent name'],aggfunc=np.sum)
-ReturnsQC_Order_Group_Counts_Pivot=ReturnsQC_Order_Group_Counts_Pivot.drop(['Caroline','Genevieve','N/A'],axis=1).ix[-14:]
+ReturnsQC_Order_Group_Counts_Pivot=ReturnsQC_Order_Group_Counts_Pivot.ix[-14:]
+#ReturnsQC_Order_Group_Counts_Pivot=ReturnsQC_Order_Group_Counts_Pivot.drop(['Caroline','Genevieve','N/A'],axis=1).ix[-14:]
 
 #Number of Returns received and processed on a daily basis (Rolling 14 day)
-
 OrdersReceived=df[['Date ','Couriers waybill number']]
 OrdersReceived.rename(columns={'Date ':'Arrival date of Return','Couriers waybill number':'Waybill Number'},inplace=True)
 OrdersReceived['Arrival date of Return']=pd.to_datetime(OrdersReceived['Arrival date of Return'],coerce=True)
@@ -94,6 +94,7 @@ Output=pd.concat([Rolling_14_Day_Receives,Rolling_14_Day_QC], join='outer',axis=
 writer3 = ExcelWriter('Returns Processing ' + str(today) + '.xlsx')
 
 #Number of returns processed per day per QC Agent (Rolling 14 day) to Excel
+
 ReturnsQCPivot.to_excel(writer3, 'Returns Team Output', startrow = 3, startcol=0,na_rep=0)
 ReturnsQC_Order_Group_Counts_Pivot.to_excel(writer3, 'Returns Team Output', startrow = 21, startcol=0,na_rep=0)
 Output.to_excel(writer3,'Arrivals vs QCd',startrow = 3, startcol=0,na_rep=0)

@@ -69,7 +69,7 @@ Rolling_14_Day_Receives=x.ix[-14:]
 
 
 #Creating the number of PO's processed per day 
-DailyQC=df1[['POs','Sort and Count Start Date:','QC Start Date:','QC End Date:','Sort and Count Team','QCTeamName']] 
+DailyQC=df1[['POs','Supplier_Name','Sort and Count Start Date:','QC Start Date:','QC End Date:','Sort and Count Team','QCTeamName']] 
 DailyQC['Sort and Count Start Date:']=pd.to_datetime(DailyQC['Sort and Count Start Date:'],coerce=True)
 DailyQC['QC Start Date:']=pd.to_datetime(DailyQC['QC Start Date:'],coerce=True)
 DailyQC['QC End Date:']=pd.to_datetime(DailyQC['QC End Date:'],coerce=True)
@@ -99,14 +99,19 @@ TotalTime['PO_Days_from_Receiving_to_QC_Complete']=TotalTime['QC End Date:']-Tot
 TotalTime['PO_Days_from_Receiving_to_QC_Complete']=TotalTime['PO_Days_from_Receiving_to_QC_Complete'].apply(lambda x: x / np.timedelta64(1,'D'))
 TotalTime['PO_Days_from_Receiving_to_QC_Complete']=TotalTime['PO_Days_from_Receiving_to_QC_Complete'].fillna(0)
 TotalTime['PO_Days_from_Receiving_to_QC_Complete'].astype(int)
-System_Days=TotalTime[['Date received','PO_Days_from_Receiving_to_QC_Complete']]
-System_Total=System_Days.query('PO_Days_from_Receiving_to_QC_Complete>0')
+System_Days=TotalTime[['Date received','Supplier_Name','PO_Days_from_Receiving_to_QC_Complete']]
+
+System_Days_Filter1=System_Days[System_Days.Supplier_Name !='Samples']
+System_Days_Filter_2=System_Days_Filter1[System_Days_Filter1.Supplier_Name !='samples']
+
+System_Days_Drop=System_Days_Filter_2[['Date received','PO_Days_from_Receiving_to_QC_Complete']]
+System_Total=System_Days_Drop.query('PO_Days_from_Receiving_to_QC_Complete>0')
 Summ=System_Total.set_index(pd.DatetimeIndex(System_Total['Date received']))
 Summ_1=Summ[['PO_Days_from_Receiving_to_QC_Complete']]
 PO_System_Time=Summ_1.resample('W',how='mean')
 PO_System_Time.index.names = ['Week of PO Arrival']
-PO_System_Time=PO_System_Time.rename(columns = {'PO_Days_from_Receiving_to_QC_Complete':'Ave. Number of days taken to process a PO for the week'})
-PO_System_Time_Final=PO_System_Time.ix[-14:]
+PO_System_Time_Final=PO_System_Time.rename(columns = {'PO_Days_from_Receiving_to_QC_Complete':'Ave. Number of days taken to process a PO for the week'})
+PO_System_Time_Final_1=PO_System_Time_Final.ix[-14:]
 
 # Number of Units processed per rolling 14 # period
 R_Stock_DF=R_Stock[['Category','Date', 'PO','Qty Counted','Team']]
@@ -144,11 +149,12 @@ R_Stock_Count_Group_W_Cat_Pivot_Filter=R_Stock_Count_Group_W_Cat_Pivot.sort(asce
 R_Stock_Count_Group_W_Cat_Pivot_Filter2=R_Stock_Count_Group_W_Cat_Pivot_Filter.query('A>0 or B>0')
 
 #Write to Excel Spreadsheet
+#writer3 = ExcelWriter('C:\Users\Laurie.Richardson\Operations-Inputs-Spree\Operations-Inputs-Spree\SpreeQCTeamOutput\SpreeQCTeamOutput ' + str(today) + '.xlsx')
 writer3 = ExcelWriter('Spree QCTeam Output ' + str(today) + '.xlsx')
 
 #PO Detailed Information in Dataframe to Excel
 z.to_excel(writer3, 'PO Detail', startrow = 3, startcol=0,na_rep=0)
-PO_System_Time_Final.to_excel(writer3, 'PO Detail', startrow = 3, startcol=4,na_rep=0, float_format='%.2f')
+PO_System_Time_Final_1.to_excel(writer3, 'PO Detail', startrow = 3, startcol=4,na_rep=0, float_format='%.2f')
 
 #Unit level data to Excel
 R_Stock_Count_Day.ix[-14:].to_excel(writer3, 'Units Counted', startrow = 3, startcol=0,na_rep=0)
@@ -219,6 +225,7 @@ worksheet3.set_column('D:F', 10)
 writer3.save()
 
 #format Excel Spreadsheet (use when data already written to excel)
+#wb = load_workbook('C:\Users\Laurie.Richardson\Operations-Inputs-Spree\Operations-Inputs-Spree\SpreeQCTeamOutput\SpreeQCTeamOutput ' + str(today) + '.xlsx')
 wb = load_workbook('Spree QCTeam Output ' + str(today) + '.xlsx')
 
 #For PO Detail
@@ -300,14 +307,21 @@ for row in cellsN:
     for cell in row:
         cell.style.number_format.format_code = 'dd/mm/yyyy'
 
+
 wb.save('Spree QCTeam Output ' + str(today) + '.xlsx')
+
+#wb.save('C:\Users\Laurie.Richardson\Operations-Inputs-Spree\Operations-Inputs-Spree\SpreeQCTeamOutput\SpreeQCTeamOutput ' + str(today) + '.xlsx')
+
 
 #Details to send Email to 
 msg = MIMEMultipart()
 today=date.today()
 doc_name= 'Spree QCTeam Output '  
 message = 'Data on QC Team Performance'        
-part = 'Spree QCTeam Output ' + str(today) + '.xlsx'
+part ='Spree QCTeam Output ' + str(today) + '.xlsx'
+
+#'C:\Users\Laurie.Richardson\Operations-Inputs-Spree\Operations-Inputs-Spree\SpreeQCTeamOutput\SpreeQCTeamOutput
+
 today = date.today()
 urlFile = open("MailList.txt", "r+")
 MailList = [i.strip() for i in urlFile.readlines()]    
